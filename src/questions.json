@@ -1,0 +1,82 @@
+[
+  {
+    "question": "What is the capital of France?",
+    "options": ["Berlin","Paris","Rome","Madrid"],
+    "correctOption": 1,
+    "checkpoint": true,
+    "timeLimit": 200,
+    "points": 1000
+  },
+  {
+    "question": "2 + 2 = ?",
+    "options": ["1","2","3","4"],
+    "correctOption": 3,
+    "checkpoint": false,
+    "timeLimit": 100,
+    "points": 500
+  },
+  {
+    "question": "Who wrote 'Hamlet'?",
+    "options": ["Shakespeare","Dickens","Tolstoy","Hemingway"],
+    "correctOption": 0,
+    "checkpoint": true,
+    "timeLimit": 150,
+    "points": 1500
+  },
+  {
+    "question": "Which planet is known as the Red Planet?",
+    "options": ["Earth","Mars","Jupiter","Venus"],
+    "correctOption": 1,
+    "checkpoint": false,
+    "timeLimit": 150,
+    "points": 700
+  },
+  {
+    "question": "What is the square root of 144?",
+    "options": ["10","11","12","13"],
+    "correctOption": 2,
+    "checkpoint": false,
+    "timeLimit": 120,
+    "points": 800
+  },
+  {
+    "question": "Which element has the chemical symbol 'Fe'?",
+    "options": ["Fluorine","Iron","Fermium","Francium"],
+    "correctOption": 1,
+    "checkpoint": true,
+    "timeLimit": 180,
+    "points": 1200
+  },
+  {
+    "question": "Who painted the Mona Lisa?",
+    "options": ["Van Gogh","Michelangelo","Da Vinci","Picasso"],
+    "correctOption": 2,
+    "checkpoint": false,
+    "timeLimit": 180,
+    "points": 1000
+  },
+  {
+    "question": "In which year did World War II end?",
+    "options": ["1940","1945","1950","1939"],
+    "correctOption": 1,
+    "checkpoint": true,
+    "timeLimit": 200,
+    "points": 1500
+  },
+  {
+    "question": "What is the derivative of sin(x)?",
+    "options": ["cos(x)","-sin(x)","-cos(x)","sin(x)"],
+    "correctOption": 0,
+    "checkpoint": false,
+    "timeLimit": 150,
+    "points": 1300
+  },
+  {
+    "question": "Which scientist developed the theory of general relativity?",
+    "options": ["Newton","Einstein","Bohr","Tesla"],
+    "correctOption": 1,
+    "checkpoint": true,
+    "timeLimit": 220,
+    "points": 2000
+  }
+]
