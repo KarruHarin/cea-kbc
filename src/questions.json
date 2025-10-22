@@ -1,6 +1,6 @@
 [
   {
-    "question": "What is the capital of France?",
+    "question": "SORBONASH kothay korbi ?",
     "options": ["Berlin","Paris","Rome","Madrid"],
     "correctOption": 1,
     "checkpoint": true,

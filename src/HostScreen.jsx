@@ -125,9 +125,11 @@ export default function HostScreen() {
   useEffect(() => {
     if (!muted && gameStarted) {
       if (timerRunning && !activeLifeline) {
+        console.log('playing it')
         clockAudioRef.current?.play();
         lifelineAudioRef.current?.pause();
       } else {
+        console.log('muting it')
         clockAudioRef.current?.pause();
       }
     }
@@ -222,13 +224,13 @@ export default function HostScreen() {
   if (!gameStarted) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden">
-        <audio ref={backgroundAudioRef} src="/kbc-background.mp3" loop />
+        <audio ref={backgroundAudioRef} src="/meme-intro-combined.mp3" loop />
         <audio ref={clockAudioRef} src="/kbc-clock.mp3" loop />
         <audio ref={lifelineAudioRef} src="/kbc-lifeline.mp3" loop />
         <audio ref={lockAudioRef} src="/kbc-optionLock.mp3" />
         <audio ref={wrongAnswerAudioRef} src="/kbc-wronganswer.mp3" />
         
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-950 via-purple-950 to-blue-950 opacity-70"></div>
+        <div className="absolute inset-0 bg-linear-to-br from-blue-950 via-purple-950 to-blue-950 opacity-70"></div>
         
         <button
           onClick={() => setMuted(!muted)}
@@ -239,19 +241,15 @@ export default function HostScreen() {
 
         <div className="text-center relative z-10">
           <div className="mb-8">
-            <div className="w-40 h-40 mx-auto bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-2xl animate-pulse">
-              <div className="w-32 h-32 bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-full flex items-center justify-center">
-                <span className="text-5xl font-bold text-purple-900">₹</span>
-              </div>
-            </div>
+            <img src="/logo_kbce.png" className=' m-auto ' alt="" />
           </div>
-          <h1 className="text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-300 mb-4" style={{fontFamily: 'serif', textShadow: '0 0 40px rgba(251, 191, 36, 0.5)'}}>
-            Kaun Banega Crorepati
+          <h1 className="text-7xl font-bold text-transparent bg-clip-text bg-linear-to-r from-yellow-300 via-yellow-400 to-yellow-300 mb-4" >
+            Kaun Banega Civil Engineer
           </h1>
           <p className="text-2xl text-white/80 mb-12">Host Control Panel</p>
           <button
             onClick={startGame}
-            className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-300 text-white font-bold text-2xl py-5 px-16 rounded-full shadow-2xl transform hover:scale-110 transition-all flex items-center gap-4 mx-auto"
+            className="bg-linear-to-r bg-purple-500 text-white font-bold text-2xl py-5 px-16 rounded-xl shadow-2xl transform hover:scale-110 transition-all flex items-center gap-4 mx-auto"
           >
             <Play className="w-8 h-8" />
             Start Game
@@ -271,7 +269,7 @@ export default function HostScreen() {
       </button>
 
       {/* Prize Ladder */}
-      <div className="w-72 bg-gradient-to-b from-purple-950/90 via-blue-950/90 to-purple-950/90 border-r-4 border-orange-500/30 p-4 overflow-y-auto">
+      <div className="w-72 bg-linear-to-b from-purple-950/90 via-blue-950/90 to-purple-950/90 border-r-4 border-orange-500/30 p-4 overflow-y-auto">
         <div className="space-y-1">
           {questionsData.map((q, idx) => {
             const isPast = idx < currentIndex;
@@ -281,19 +279,19 @@ export default function HostScreen() {
               <div
                 key={idx}
                 className={`
-                  relative px-4 py-3 rounded-lg border transition-all
-                  ${isCurrent ? 'bg-gradient-to-r from-orange-500 to-orange-400 border-orange-300 shadow-lg shadow-orange-500/50' : ''}
+                  relative px-4 py-3 rounded-md border transition-all
+                  ${isCurrent ? 'bg-linear-to-r from-orange-500 to-orange-400 border-orange-300 shadow-lg shadow-orange-500/50' : ''}
                   ${isPast ? 'bg-purple-900/40 border-purple-500/30 text-green-300' : ''}
                   ${!isCurrent && !isPast ? 'bg-gray-900/40 border-gray-700/30 text-gray-500' : ''}
                 `}
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs font-bold ${isCurrent ? 'text-white' : ''}`}>
-                      {idx + 1}
+                  <div className="flex items-center gap-2 text-white">
+                    <span>
+                  Question
                     </span>
                     <span className={`font-bold ${isCurrent ? 'text-white' : ''}`}>
-                      ₹ {q.points.toLocaleString()}
+                      {idx+1}
                     </span>
                   </div>
                   {q.checkpoint && (
@@ -311,9 +309,9 @@ export default function HostScreen() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col relative">
         {/* Background Pattern */}
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-950 via-purple-950 to-blue-950 opacity-80"></div>
+        <div className="absolute inset-0 bg-linear-to-b from-blue-950 via-purple-950 to-blue-950 opacity-80"></div>
         <div className="absolute inset-0" style={{
-          backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%)',
+          backgroundColor: '#361F58',
           backgroundSize: '100px 100px'
         }}></div>
 
@@ -322,14 +320,14 @@ export default function HostScreen() {
           <div className="text-center mb-4">
             <h1 className="text-4xl font-bold text-yellow-400 mb-2">Host Control Panel</h1>
             <div className="text-white text-lg">
-              Question <span className="font-bold text-orange-400">{currentIndex + 1}</span> of {questionsData.length} • ₹ {currentQ?.points?.toLocaleString()}
+              Question <span className="font-bold text-orange-400">{currentIndex + 1}</span> of {questionsData.length}
             </div>
           </div>
 
           {/* Timer */}
           <div className="flex justify-center mb-6">
             <div className="relative">
-              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-2xl">
+              <div className="w-32 h-32 rounded-full bg-linear-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-2xl">
                 <div className="w-28 h-28 rounded-full bg-black/90 flex items-center justify-center">
                   <span className={`text-4xl font-bold ${timeLeft <= 10 ? 'text-red-400 animate-pulse' : 'text-white'}`}>
                     {activeLifeline ? lifelineTimeLeft : timeLeft}
@@ -344,7 +342,7 @@ export default function HostScreen() {
 
           {/* Question */}
           <div className="mb-6">
-            <div className="bg-gradient-to-r from-blue-900 via-purple-900 to-blue-900 rounded-xl p-8 border-2 border-blue-500/30 shadow-2xl">
+            <div className="bg-linear-to-r bg-purple-950 rounded-xl p-8 border-2 border-[#E3C321] shadow-2xl">
               <p className="text-2xl text-white text-center font-medium leading-relaxed">
                 {currentQ?.question}
               </p>
@@ -365,12 +363,12 @@ export default function HostScreen() {
                   onClick={() => selectAnswer(i)}
                   disabled={locked || isEliminated}
                   className={`
-                    relative rounded-lg p-4 transition-all border-2 text-left
+                    relative rounded-md p-4 transition-all border-2 text-left border-[#AAA350]
                     ${isEliminated ? 'opacity-30 cursor-not-allowed' : ''}
-                    ${isSelected && !showAnswer ? 'bg-gradient-to-r from-orange-500 to-orange-400 border-orange-300 shadow-lg shadow-orange-500/50' : ''}
-                    ${!isSelected && !showAnswer && !isEliminated ? 'bg-gradient-to-r from-blue-800 to-blue-700 border-blue-600 hover:border-blue-400' : ''}
-                    ${isCorrect ? 'bg-gradient-to-r from-green-600 to-green-500 border-green-400 shadow-lg shadow-green-500/50 animate-pulse' : ''}
-                    ${isWrong ? 'bg-gradient-to-r from-red-600 to-red-500 border-red-400' : ''}
+                    ${isSelected && !showAnswer ? 'bg-linear-to-r from-amber-500 to-amber-400 border-orange-300 shadow-lg shadow-orange-500/50' : ''}
+                    ${!isSelected && !showAnswer && !isEliminated ? 'bg-linear-to-r from-blue-800 to-blue-700 border-blue-600 hover:border-blue-400' : ''}
+                    ${isCorrect ? 'bg-linear-to-r from-green-600 to-green-500 border-green-400 shadow-lg shadow-green-500/50 animate-pulse' : ''}
+                    ${isWrong ? 'bg-linear-to-r from-red-600 to-red-500 border-red-400' : ''}
                   `}
                 >
                   <div className="flex items-center gap-3">
@@ -402,7 +400,7 @@ export default function HostScreen() {
               disabled={!lifelines.fiftyFifty || locked}
               className={`w-16 h-16 rounded-full flex items-center justify-center border-2 transition-all ${
                 lifelines.fiftyFifty && !locked
-                  ? 'bg-gradient-to-br from-orange-500 to-orange-400 border-orange-300 shadow-lg hover:scale-110'
+                  ? 'bg-linear-to-br from-orange-500 to-orange-400 border-orange-300 shadow-lg hover:scale-110'
                   : 'bg-gray-800/50 border-gray-700 opacity-40 cursor-not-allowed'
               }`}
             >
@@ -413,7 +411,7 @@ export default function HostScreen() {
               disabled={!lifelines.phoneFriend || locked}
               className={`w-16 h-16 rounded-full flex items-center justify-center border-2 transition-all ${
                 lifelines.phoneFriend && !locked
-                  ? 'bg-gradient-to-br from-orange-500 to-orange-400 border-orange-300 shadow-lg hover:scale-110'
+                  ? 'bg-linear-to-br from-orange-500 to-orange-400 border-orange-300 shadow-lg hover:scale-110'
                   : 'bg-gray-800/50 border-gray-700 opacity-40 cursor-not-allowed'
               }`}
             >
@@ -424,11 +422,22 @@ export default function HostScreen() {
               disabled={!lifelines.audiencePoll || locked}
               className={`w-16 h-16 rounded-full flex items-center justify-center border-2 transition-all ${
                 lifelines.audiencePoll && !locked
-                  ? 'bg-gradient-to-br from-orange-500 to-orange-400 border-orange-300 shadow-lg hover:scale-110'
+                  ? 'bg-linear-to-br from-orange-500 to-orange-400 border-orange-300 shadow-lg hover:scale-110'
                   : 'bg-gray-800/50 border-gray-700 opacity-40 cursor-not-allowed'
               }`}
             >
               <span className="text-3xl">👥</span>
+            </button>
+               <button
+              onClick={() => useLifeline("doubleDip")}
+              disabled={!lifelines.audiencePoll || locked}
+              className={`w-16 h-16 rounded-full flex items-center justify-center border-2 transition-all ${
+                lifelines.audiencePoll && !locked
+                  ? 'bg-linear-to-br from-orange-500 to-orange-400 border-orange-300 shadow-lg hover:scale-110'
+                  : 'bg-gray-800/50 border-gray-700 opacity-40 cursor-not-allowed'
+              }`}
+            >
+              <span className="text-3xl">x2</span>
             </button>
           </div>
 
@@ -440,7 +449,7 @@ export default function HostScreen() {
               className={`flex items-center gap-2 py-3 px-8 rounded-full font-bold text-lg transition-all ${
                 locked || contestantAnswer === null
                   ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-300 text-white shadow-lg hover:scale-105'
+                  : 'bg-linear-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-300 text-white shadow-lg hover:scale-105'
               }`}
             >
               <Lock className="w-5 h-5" />
@@ -452,7 +461,7 @@ export default function HostScreen() {
               className={`flex items-center gap-2 py-3 px-8 rounded-full font-bold text-lg transition-all ${
                 !locked || showAnswer
                   ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white shadow-lg hover:scale-105'
+                  : 'bg-linear-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white shadow-lg hover:scale-105'
               }`}
             >
               <Eye className="w-5 h-5" />
@@ -464,7 +473,7 @@ export default function HostScreen() {
               className={`flex items-center gap-2 py-3 px-8 rounded-full font-bold text-lg transition-all ${
                 !showAnswer
                   ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white shadow-lg hover:scale-105'
+                  : 'bg-linear-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white shadow-lg hover:scale-105'
               }`}
             >
               Next

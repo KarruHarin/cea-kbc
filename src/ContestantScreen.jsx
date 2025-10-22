@@ -137,7 +137,7 @@ export default function ContestantScreen() {
             </div>
           </div>
           <h1 className="text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-300 mb-4" style={{fontFamily: 'serif', textShadow: '0 0 40px rgba(251, 191, 36, 0.5)'}}>
-            Kaun Banega Crorepati
+            Kaun Banega Civil Engineer
           </h1>
           <p className="text-2xl text-white/80 mb-4">Contestant Panel</p>
           <p className="text-xl text-yellow-300 animate-pulse">Waiting for host to start the game...</p>
@@ -292,6 +292,13 @@ export default function ContestantScreen() {
                 : 'bg-gray-800/50 border-gray-700 opacity-40'
             }`}>
               <span className="text-3xl">👥</span>
+            </div>
+             <div className={`w-16 h-16 rounded-full flex items-center justify-center border-2 transition-all ${
+              lifelines.audiencePoll 
+                ? 'bg-gradient-to-br from-orange-500 to-orange-400 border-orange-300 shadow-lg' 
+                : 'bg-gray-800/50 border-gray-700 opacity-40'
+            }`}>
+              <span className="text-3xl">x2</span>
             </div>
           </div>
 
