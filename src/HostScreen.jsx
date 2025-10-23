@@ -325,7 +325,7 @@ export default function HostScreen() {
           </div>
 
           {/* Timer */}
-          <div className="flex justify-center mb-6">
+          {/* <div className="flex justify-center mb-6">
             <div className="relative">
               <div className="w-32 h-32 rounded-full bg-linear-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-2xl">
                 <div className="w-28 h-28 rounded-full bg-black/90 flex items-center justify-center">
@@ -338,7 +338,7 @@ export default function HostScreen() {
                 <div className="absolute inset-0 rounded-full border-4 border-red-500 animate-ping"></div>
               )}
             </div>
-          </div>
+          </div> */}
 
           {/* Question */}
           <div className="mb-6">
