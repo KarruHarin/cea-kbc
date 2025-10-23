@@ -62,12 +62,12 @@ export default function ContestantScreen() {
           <div className="mb-8">
             <div className="w-40 h-40 mx-auto bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-2xl animate-pulse">
               <div className="w-32 h-32 bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-full flex items-center justify-center">
-                <span className="text-5xl font-bold text-purple-900">₹</span>
+                <span className="text-5xl font-bold text-purple-900">👷‍♂️</span>
               </div>
             </div>
           </div>
           <h1 className="text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-300 mb-4" style={{fontFamily: 'serif', textShadow: '0 0 40px rgba(251, 191, 36, 0.5)'}}>
-            Kaun Banega Crorepati
+            Kaun Banega Civil Engineer
           </h1>
           <p className="text-2xl text-white/80 mb-4">Contestant Panel</p>
           <p className="text-xl text-yellow-300 animate-pulse">Waiting for host to start the game...</p>
