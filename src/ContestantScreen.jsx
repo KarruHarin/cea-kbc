@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ref, onValue } from "firebase/database";
 import { db } from "./firebase";
+import { AlertCircle } from "lucide-react";
 
 export default function ContestantScreen() {
   const [gameStarted, setGameStarted] = useState(false);
@@ -14,44 +15,156 @@ export default function ContestantScreen() {
   const [eliminatedOptions, setEliminatedOptions] = useState([]);
   const [doubleGuessUsed, setDoubleGuessUsed] = useState(false);
   const [firstGuess, setFirstGuess] = useState(null);
+  const [hostActive, setHostActive] = useState(false);
+  const [gameExists, setGameExists] = useState(true);
 
   useEffect(() => {
+    // Listen to game existence and host status
+    const gameRef = ref(db, "game");
+    const unsubscribeGame = onValue(gameRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setGameExists(true);
+        const gameData = snapshot.val();
+        
+        // Check if host is active
+        if (gameData.host && gameData.host.active) {
+          const timeDiff = Date.now() - (gameData.host.timestamp || 0);
+          // Consider host active if timestamp is within last 15 seconds
+          setHostActive(timeDiff < 15000);
+        } else {
+          setHostActive(false);
+        }
+      } else {
+        setGameExists(false);
+        setHostActive(false);
+      }
+    });
+
+    // Listen to individual game state properties
     const gameStartedRef = ref(db, "game/gameStarted");
-    onValue(gameStartedRef, snap => setGameStarted(snap.val() || false));
+    const unsubscribeStarted = onValue(gameStartedRef, snap => {
+      if (snap.exists()) {
+        setGameStarted(snap.val() || false);
+      }
+    });
 
     const indexRef = ref(db, "game/currentQuestionIndex");
-    onValue(indexRef, snap => setCurrentIndex(snap.val() || 0));
+    const unsubscribeIndex = onValue(indexRef, snap => {
+      if (snap.exists()) {
+        setCurrentIndex(snap.val() || 0);
+      }
+    });
 
     const questionsRef = ref(db, "game/questions");
-    onValue(questionsRef, snap => setQuestions(snap.val() || []));
+    const unsubscribeQuestions = onValue(questionsRef, snap => {
+      if (snap.exists()) {
+        setQuestions(snap.val() || []);
+      }
+    });
 
     const answerRef = ref(db, "game/contestantAnswer");
-    onValue(answerRef, snap => setContestantAnswer(snap.val()));
+    const unsubscribeAnswer = onValue(answerRef, snap => {
+      if (snap.exists()) {
+        setContestantAnswer(snap.val());
+      } else {
+        setContestantAnswer(null);
+      }
+    });
 
     const lockedRef = ref(db, "game/locked");
-    onValue(lockedRef, snap => setLocked(snap.val()));
+    const unsubscribeLocked = onValue(lockedRef, snap => {
+      if (snap.exists()) {
+        setLocked(snap.val());
+      }
+    });
 
     const showRef = ref(db, "game/showAnswer");
-    onValue(showRef, snap => setShowAnswer(snap.val()));
+    const unsubscribeShow = onValue(showRef, snap => {
+      if (snap.exists()) {
+        setShowAnswer(snap.val());
+      }
+    });
 
     const lifelineRef = ref(db, "game/lifelines");
-    onValue(lifelineRef, snap => setLifelines(snap.val() || {}));
+    const unsubscribeLifeline = onValue(lifelineRef, snap => {
+      if (snap.exists()) {
+        setLifelines(snap.val() || {});
+      }
+    });
 
     const activeLifelineRef = ref(db, "game/activeLifeline");
-    onValue(activeLifelineRef, snap => setActiveLifeline(snap.val()));
+    const unsubscribeActiveLifeline = onValue(activeLifelineRef, snap => {
+      if (snap.exists()) {
+        setActiveLifeline(snap.val());
+      } else {
+        setActiveLifeline(null);
+      }
+    });
 
     const eliminatedRef = ref(db, "game/eliminatedOptions");
-    onValue(eliminatedRef, snap => setEliminatedOptions(snap.val() || []));
+    const unsubscribeEliminated = onValue(eliminatedRef, snap => {
+      if (snap.exists()) {
+        setEliminatedOptions(snap.val() || []);
+      } else {
+        setEliminatedOptions([]);
+      }
+    });
 
     const doubleGuessUsedRef = ref(db, "game/doubleGuessUsed");
-    onValue(doubleGuessUsedRef, snap => setDoubleGuessUsed(snap.val() || false));
+    const unsubscribeDoubleGuess = onValue(doubleGuessUsedRef, snap => {
+      if (snap.exists()) {
+        setDoubleGuessUsed(snap.val() || false);
+      }
+    });
 
     const firstGuessRef = ref(db, "game/firstGuess");
-    onValue(firstGuessRef, snap => setFirstGuess(snap.val()));
+    const unsubscribeFirstGuess = onValue(firstGuessRef, snap => {
+      if (snap.exists()) {
+        setFirstGuess(snap.val());
+      } else {
+        setFirstGuess(null);
+      }
+    });
+
+    // Cleanup all listeners
+    return () => {
+      unsubscribeGame();
+      unsubscribeStarted();
+      unsubscribeIndex();
+      unsubscribeQuestions();
+      unsubscribeAnswer();
+      unsubscribeLocked();
+      unsubscribeShow();
+      unsubscribeLifeline();
+      unsubscribeActiveLifeline();
+      unsubscribeEliminated();
+      unsubscribeDoubleGuess();
+      unsubscribeFirstGuess();
+    };
   }, []);
 
   const optionLabels = ["A", "B", "C", "D"];
   const currentQuestion = questions[currentIndex] || {};
+
+  // Show error if game doesn't exist or host disconnected
+  if (!gameExists || !hostActive) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-red-950 via-purple-950 to-red-950 opacity-70"></div>
+        
+        <div className="text-center relative z-10 max-w-2xl">
+          <div className="mb-8">
+            <AlertCircle className="w-24 h-24 text-red-500 mx-auto animate-pulse" />
+          </div>
+          <h1 className="text-4xl font-bold text-red-400 mb-4">Game Session Ended</h1>
+          <p className="text-xl text-white/80 mb-8">
+            {!gameExists ? "The host has ended the game session." : "The host has disconnected from the game."}
+          </p>
+          <p className="text-lg text-white/60">Please wait for the host to start a new game session.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!gameStarted) {
     return (
@@ -67,7 +180,7 @@ export default function ContestantScreen() {
             </div>
           </div>
           <h1 className="text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-300 mb-4" style={{fontFamily: 'serif', textShadow: '0 0 40px rgba(251, 191, 36, 0.5)'}}>
-            Kaun Banega Civil Engineer
+            Kaun Banega civil Engineer
           </h1>
           <p className="text-2xl text-white/80 mb-4">Contestant Panel</p>
           <p className="text-xl text-yellow-300 animate-pulse">Waiting for host to start the game...</p>

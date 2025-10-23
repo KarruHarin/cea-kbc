@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
-import { ref, set, onValue, onDisconnect } from "firebase/database";
+import { ref, set, onValue, onDisconnect, remove, get } from "firebase/database";
 import { db } from "./firebase";
-import { Lock, Eye, ChevronRight, Play, Upload } from "lucide-react";
+import { Lock, Eye, ChevronRight, Play, Upload, AlertCircle } from "lucide-react";
 
 export default function HostScreen() {
   const [gameStarted, setGameStarted] = useState(false);
@@ -17,11 +17,11 @@ export default function HostScreen() {
   const [uploadError, setUploadError] = useState("");
   const [doubleGuessUsed, setDoubleGuessUsed] = useState(false);
   const [firstGuess, setFirstGuess] = useState(null);
-  const [hostActive, setHostActive] = useState(false);
-  const [isThisHost, setIsThisHost] = useState(false);
-  const [hostId] = useState(() => 'host_' + Date.now() + '_' + Math.random());
+  const [isHost, setIsHost] = useState(false);
+  const [hostError, setHostError] = useState("");
 
   const fileInputRef = useRef(null);
+  const hostIdRef = useRef(Date.now().toString());
 
   // Handle JSON file upload
   const handleFileUpload = (event) => {
@@ -74,128 +74,120 @@ export default function HostScreen() {
     reader.readAsText(file);
   };
 
-  useEffect(() => {
-    // Check if another host is already active
-    const hostRef = ref(db, "game/host");
-    
-    const unsubscribe = onValue(hostRef, (snap) => {
-      const hostData = snap.val();
-      
-      if (hostData) {
-        // Check if this is the active host or if another host is active
-        if (hostData.id === hostId) {
-          setIsThisHost(true);
-          setHostActive(true);
-        } else {
-          // Another host is active
-          const timeSinceLastUpdate = Date.now() - (hostData.timestamp || 0);
-          // Consider host inactive after 10 seconds of no updates
-          if (timeSinceLastUpdate > 10000) {
-            setHostActive(false);
-            setIsThisHost(false);
-          } else {
-            setHostActive(true);
-            setIsThisHost(false);
-          }
-        }
-      } else {
-        setHostActive(false);
-        setIsThisHost(false);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [hostId]);
-
+  // Check if another host exists and claim host role
   useEffect(() => {
     if (!questionsLoaded || questionsData.length === 0) return;
 
-    // Only proceed if no other host is active
-    if (hostActive && !isThisHost) {
-      return;
-    }
-
-    const gameRef = ref(db, "game");
-    const hostRef = ref(db, "game/host");
-
-    // Set this instance as the active host
-    set(hostRef, {
-      id: hostId,
-      active: true,
-      timestamp: Date.now()
-    });
-
-    setIsThisHost(true);
-
-    // Update timestamp every 5 seconds to show this host is still active
-    const heartbeatInterval = setInterval(() => {
-      set(ref(db, "game/host/timestamp"), Date.now());
-    }, 5000);
-
-    set(gameRef, {
-      host: { id: hostId, active: true, timestamp: Date.now() },
-      gameStarted: false,
-      currentQuestionIndex: 0,
-      contestantAnswer: null,
-      locked: false,
-      showAnswer: false,
-      lifelines: { 
-        fiftyFifty: true, 
-        phoneFriend: true, 
-        audiencePoll: true,
-        doubleGuess: true 
-      },
-      questions: questionsData,
-      activeLifeline: null,
-      eliminatedOptions: [],
-      doubleGuessUsed: false,
-      firstGuess: null
-    });
-
-    // Remove host data when this component unmounts or connection is lost
-    onDisconnect(hostRef).remove();
-
-    const gameStartedRef = ref(db, "game/gameStarted");
-    onValue(gameStartedRef, snap => setGameStarted(snap.val() || false));
-
-    const indexRef = ref(db, "game/currentQuestionIndex");
-    onValue(indexRef, snap => setCurrentIndex(snap.val() || 0));
-
-    const answerRef = ref(db, "game/contestantAnswer");
-    onValue(answerRef, snap => setContestantAnswer(snap.val()));
-
-    const lockedRef = ref(db, "game/locked");
-    onValue(lockedRef, snap => setLocked(snap.val()));
-
-    const showRef = ref(db, "game/showAnswer");
-    onValue(showRef, snap => setShowAnswer(snap.val()));
-
-    const lifelineRef = ref(db, "game/lifelines");
-    onValue(lifelineRef, snap => setLifelines(snap.val() || {}));
-
-    const activeLifelineRef = ref(db, "game/activeLifeline");
-    onValue(activeLifelineRef, snap => setActiveLifeline(snap.val()));
-
-    const eliminatedRef = ref(db, "game/eliminatedOptions");
-    onValue(eliminatedRef, snap => setEliminatedOptions(snap.val() || []));
-
-    const doubleGuessUsedRef = ref(db, "game/doubleGuessUsed");
-    onValue(doubleGuessUsedRef, snap => setDoubleGuessUsed(snap.val() || false));
-
-    const firstGuessRef = ref(db, "game/firstGuess");
-    onValue(firstGuessRef, snap => setFirstGuess(snap.val()));
-
-    return () => {
-      clearInterval(heartbeatInterval);
+    const checkAndClaimHost = async () => {
+      const hostRef = ref(db, "game/host");
+      const hostSnapshot = await get(hostRef);
+      
+      if (hostSnapshot.exists()) {
+        const existingHost = hostSnapshot.val();
+        const timeDiff = Date.now() - (existingHost.timestamp || 0);
+        
+        // If existing host timestamp is older than 10 seconds, assume disconnected
+        if (timeDiff > 10000) {
+          // Clean up old session and claim host
+          await initializeHost();
+        } else {
+          setHostError("Another host is already controlling the game. Please wait for them to disconnect.");
+          return;
+        }
+      } else {
+        // No existing host, claim it
+        await initializeHost();
+      }
     };
-  }, [questionsLoaded, questionsData, hostActive, isThisHost, hostId]);
+
+    const initializeHost = async () => {
+      const gameRef = ref(db, "game");
+      const hostRef = ref(db, "game/host");
+
+      await set(gameRef, {
+        host: { 
+          id: hostIdRef.current,
+          active: true, 
+          timestamp: Date.now() 
+        },
+        gameStarted: false,
+        currentQuestionIndex: 0,
+        contestantAnswer: null,
+        locked: false,
+        showAnswer: false,
+        lifelines: { 
+          fiftyFifty: true, 
+          phoneFriend: true, 
+          audiencePoll: true,
+          doubleGuess: true 
+        },
+        questions: questionsData,
+        activeLifeline: null,
+        eliminatedOptions: [],
+        doubleGuessUsed: false,
+        firstGuess: null
+      });
+
+      // Set up disconnect handler to remove entire game session
+      onDisconnect(gameRef).remove();
+
+      // Set up heartbeat to update timestamp
+      const heartbeatInterval = setInterval(() => {
+        set(hostRef, {
+          id: hostIdRef.current,
+          active: true,
+          timestamp: Date.now()
+        });
+      }, 5000);
+
+      setIsHost(true);
+      setHostError("");
+
+      // Listen to game state changes
+      const gameStartedRef = ref(db, "game/gameStarted");
+      onValue(gameStartedRef, snap => setGameStarted(snap.val() || false));
+
+      const indexRef = ref(db, "game/currentQuestionIndex");
+      onValue(indexRef, snap => setCurrentIndex(snap.val() || 0));
+
+      const answerRef = ref(db, "game/contestantAnswer");
+      onValue(answerRef, snap => setContestantAnswer(snap.val()));
+
+      const lockedRef = ref(db, "game/locked");
+      onValue(lockedRef, snap => setLocked(snap.val()));
+
+      const showRef = ref(db, "game/showAnswer");
+      onValue(showRef, snap => setShowAnswer(snap.val()));
+
+      const lifelineRef = ref(db, "game/lifelines");
+      onValue(lifelineRef, snap => setLifelines(snap.val() || {}));
+
+      const activeLifelineRef = ref(db, "game/activeLifeline");
+      onValue(activeLifelineRef, snap => setActiveLifeline(snap.val()));
+
+      const eliminatedRef = ref(db, "game/eliminatedOptions");
+      onValue(eliminatedRef, snap => setEliminatedOptions(snap.val() || []));
+
+      const doubleGuessUsedRef = ref(db, "game/doubleGuessUsed");
+      onValue(doubleGuessUsedRef, snap => setDoubleGuessUsed(snap.val() || false));
+
+      const firstGuessRef = ref(db, "game/firstGuess");
+      onValue(firstGuessRef, snap => setFirstGuess(snap.val()));
+
+      // Cleanup interval on unmount
+      return () => clearInterval(heartbeatInterval);
+    };
+
+    checkAndClaimHost();
+  }, [questionsLoaded, questionsData]);
 
   const startGame = () => {
+    if (!isHost) return;
     set(ref(db, "game/gameStarted"), true);
   };
 
   const selectAnswer = (i) => {
-    if (!locked) {
+    if (!isHost || !locked) {
       if (doubleGuessUsed && firstGuess !== null) {
         // Second guess
         set(ref(db, "game/contestantAnswer"), i);
@@ -210,6 +202,7 @@ export default function HostScreen() {
   };
 
   const lockAnswer = () => {
+    if (!isHost) return;
     if (doubleGuessUsed && firstGuess !== null && contestantAnswer !== null) {
       // Both guesses made
       set(ref(db, "game/locked"), true);
@@ -221,10 +214,12 @@ export default function HostScreen() {
   };
 
   const revealAnswer = () => {
+    if (!isHost) return;
     set(ref(db, "game/showAnswer"), true);
   };
 
   const nextQuestion = () => {
+    if (!isHost) return;
     const newIndex = currentIndex + 1;
     if (newIndex >= questionsData.length) {
       alert("All questions completed!");
@@ -241,6 +236,7 @@ export default function HostScreen() {
   };
 
   const useLifeline = (type) => {
+    if (!isHost) return;
     if (lifelines[type] && !locked) {
       set(ref(db, `game/lifelines/${type}`), false);
       set(ref(db, "game/activeLifeline"), type);
@@ -257,36 +253,31 @@ export default function HostScreen() {
   };
 
   const endLifeline = () => {
+    if (!isHost) return;
     set(ref(db, "game/activeLifeline"), null);
   };
 
   const currentQ = questionsData[currentIndex];
   const optionLabels = ["A", "B", "C", "D"];
 
-  // Show blocked message if another host is active
-  if (questionsLoaded && hostActive && !isThisHost) {
+  // Show host error if another host exists
+  if (hostError) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-red-950 via-purple-950 to-red-950 opacity-70"></div>
         
         <div className="text-center relative z-10 max-w-2xl">
           <div className="mb-8">
-            <div className="w-40 h-40 mx-auto bg-gradient-to-br from-red-400 to-red-600 rounded-full flex items-center justify-center shadow-2xl animate-pulse">
-              <div className="w-32 h-32 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center">
-                <span className="text-5xl font-bold text-white">🚫</span>
-              </div>
-            </div>
+            <AlertCircle className="w-24 h-24 text-red-500 mx-auto animate-pulse" />
           </div>
-          <h1 className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-300 via-red-400 to-red-300 mb-4" style={{fontFamily: 'serif', textShadow: '0 0 40px rgba(239, 68, 68, 0.5)'}}>
-            Host Already Active
-          </h1>
-          <p className="text-2xl text-white/80 mb-4">Another host is currently controlling the game</p>
-          <p className="text-lg text-red-300 mb-8">Only one host can be active at a time</p>
-          <div className="bg-gradient-to-r from-red-900/80 to-purple-900/80 rounded-xl p-6 border-2 border-red-500/30 shadow-2xl">
-            <p className="text-white/90 text-lg">
-              Please wait for the current host to disconnect before joining as a host.
-            </p>
-          </div>
+          <h1 className="text-4xl font-bold text-red-400 mb-4">Host Already Active</h1>
+          <p className="text-xl text-white/80 mb-8">{hostError}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-300 text-white font-bold text-lg py-3 px-8 rounded-full shadow-2xl transform hover:scale-105 transition-all"
+          >
+            Retry Connection
+          </button>
         </div>
       </div>
     );
@@ -302,12 +293,12 @@ export default function HostScreen() {
           <div className="mb-8">
             <div className="w-40 h-40 mx-auto bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-2xl animate-pulse">
               <div className="w-32 h-32 bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-full flex items-center justify-center">
-                <span className="text-5xl font-bold text-purple-900">₹</span>
+                <span className="text-5xl font-bold text-purple-900">👷‍♂️</span>
               </div>
             </div>
           </div>
           <h1 className="text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-300 mb-4" style={{fontFamily: 'serif', textShadow: '0 0 40px rgba(251, 191, 36, 0.5)'}}>
-            Kaun Banega Civil Engineer
+            Kaun Banega civil Engineer
           </h1>
           <p className="text-2xl text-white/80 mb-12">Host Control Panel</p>
           
@@ -372,7 +363,7 @@ export default function HostScreen() {
             </div>
           </div>
           <h1 className="text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-300 mb-4" style={{fontFamily: 'serif', textShadow: '0 0 40px rgba(251, 191, 36, 0.5)'}}>
-            Kaun Banega Civil Engineer
+            Kaun Banega civil Engineer
           </h1>
           <p className="text-2xl text-white/80 mb-4">Host Control Panel</p>
           <p className="text-lg text-green-300 mb-12">{questionsData.length} questions loaded ✓</p>
