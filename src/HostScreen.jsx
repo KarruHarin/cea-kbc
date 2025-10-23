@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { ref, set, onValue, onDisconnect, remove, get } from "firebase/database";
+import { ref, set, onValue, onDisconnect, get } from "firebase/database";
 import { db } from "./firebase";
 import { Lock, Eye, ChevronRight, Play, Upload, AlertCircle } from "lucide-react";
 
@@ -19,6 +19,7 @@ export default function HostScreen() {
   const [firstGuess, setFirstGuess] = useState(null);
   const [isHost, setIsHost] = useState(false);
   const [hostError, setHostError] = useState("");
+  const [optionsRevealed, setOptionsRevealed] = useState(false);
 
   const fileInputRef = useRef(null);
   const hostIdRef = useRef(Date.now().toString());
@@ -125,7 +126,8 @@ export default function HostScreen() {
         activeLifeline: null,
         eliminatedOptions: [],
         doubleGuessUsed: false,
-        firstGuess: null
+        firstGuess: null,
+        optionsRevealed: false
       });
 
       // Set up disconnect handler to remove entire game session
@@ -174,6 +176,9 @@ export default function HostScreen() {
       const firstGuessRef = ref(db, "game/firstGuess");
       onValue(firstGuessRef, snap => setFirstGuess(snap.val()));
 
+      const optionsRevealedRef = ref(db, "game/optionsRevealed");
+      onValue(optionsRevealedRef, snap => setOptionsRevealed(snap.val() || false));
+
       // Cleanup interval on unmount
       return () => clearInterval(heartbeatInterval);
     };
@@ -184,6 +189,11 @@ export default function HostScreen() {
   const startGame = () => {
     if (!isHost) return;
     set(ref(db, "game/gameStarted"), true);
+  };
+
+  const revealOptions = () => {
+    if (!isHost) return;
+    set(ref(db, "game/optionsRevealed"), true);
   };
 
   const selectAnswer = (i) => {
@@ -233,6 +243,7 @@ export default function HostScreen() {
     set(ref(db, "game/doubleGuessUsed"), false);
     set(ref(db, "game/firstGuess"), null);
     set(ref(db, "game/activeLifeline"), null);
+    set(ref(db, "game/optionsRevealed"), false);
   };
 
   const useLifeline = (type) => {
@@ -381,43 +392,42 @@ export default function HostScreen() {
 
   return (
     <div className="min-h-screen bg-black flex relative">
-      {/* Prize Ladder */}
-      <div className="w-72 bg-gradient-to-b from-purple-950/90 via-blue-950/90 to-purple-950/90 border-r-4 border-orange-500/30 p-4 overflow-y-auto">
-        <div className="space-y-1">
-          {questionsData.map((q, idx) => {
-            const isPast = idx < currentIndex;
-            const isCurrent = idx === currentIndex;
-            
-            return (
-              <div
-                key={idx}
-                className={`
-                  relative px-4 py-3 rounded-lg border transition-all
-                  ${isCurrent ? 'bg-gradient-to-r from-orange-500 to-orange-400 border-orange-300 shadow-lg shadow-orange-500/50' : ''}
-                  ${isPast ? 'bg-purple-900/40 border-purple-500/30 text-green-300' : ''}
-                  ${!isCurrent && !isPast ? 'bg-gray-900/40 border-gray-700/30 text-gray-500' : ''}
-                `}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs font-bold ${isCurrent ? 'text-white' : ''}`}>
-                      {idx + 1}
-                    </span>
-                    <span className={`font-bold ${isCurrent ? 'text-white' : ''}`}>
-                      ₹ {q.points.toLocaleString()}
-                    </span>
-                  </div>
-                  {q.checkpoint && (
-                    <span className={`text-xs font-bold ${isCurrent ? 'text-white' : 'text-yellow-500'}`}>
-                      ★
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+      {/* Question Ladder */}
+<div className="w-72 min-h-screen bg-gradient-to-b from-purple-950/90 via-blue-950/90 to-purple-950/90 border-r-4 border-orange-500/30 p-4 flex flex-col">
+  <div className="flex-1 flex flex-col justify-between overflow-y-auto">
+    {questionsData.slice().reverse().map((q, revIdx) => {
+      const idx = questionsData.length - 1 - revIdx;
+      const isPast = idx < currentIndex;
+      const isCurrent = idx === currentIndex;
+
+      return (
+        <div
+          key={idx}
+          className={`
+            relative px-4 py-3 rounded-lg border transition-all
+            ${isCurrent ? 'bg-gradient-to-r from-orange-500 to-orange-400 border-orange-300 shadow-lg shadow-orange-500/50' : ''}
+            ${isPast ? 'bg-purple-900/40 border-purple-500/30 text-green-300' : ''}
+            ${!isCurrent && !isPast ? 'bg-gray-900/40 border-gray-700/30 text-gray-500' : ''}
+          `}
+        >
+          <div className="flex items-center justify-center">
+            <span className={`font-bold text-lg ${isCurrent ? 'text-white' : ''}`}>
+              Question {idx + 1}
+            </span>
+            {q.checkpoint && (
+              <span className={`ml-2 text-xs font-bold ${isCurrent ? 'text-white' : 'text-yellow-500'}`}>
+                ★
+              </span>
+            )}
+          </div>
         </div>
-      </div>
+      );
+    })}
+  </div>
+</div>
+
+
+
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col relative">
@@ -433,7 +443,7 @@ export default function HostScreen() {
           <div className="text-center mb-4">
             <h1 className="text-4xl font-bold text-yellow-400 mb-2">Host Control Panel</h1>
             <div className="text-white text-lg">
-              Question <span className="font-bold text-orange-400">{currentIndex + 1}</span> of {questionsData.length} • ₹ {currentQ?.points?.toLocaleString()}
+              Question <span className="font-bold text-orange-400">{currentIndex + 1}</span> of {questionsData.length}
             </div>
           </div>
 
@@ -447,59 +457,67 @@ export default function HostScreen() {
           </div>
 
           {/* Options */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            {currentQ?.options?.map((opt, i) => {
-              const isSelected = contestantAnswer === i;
-              const isCorrect = showAnswer && i === currentQ?.correctOption;
-              const isWrong = showAnswer && isSelected && !isCorrect;
-              const isEliminated = eliminatedOptions.includes(i);
-              const isFirstGuess = doubleGuessUsed && firstGuess === i;
-              const isFirstGuessWrong = doubleGuessUsed && showAnswer && firstGuess === i && firstGuess !== currentQ?.correctOption;
-              
-              return (
-                <button
-                  key={i}
-                  onClick={() => selectAnswer(i)}
-                  disabled={locked || isEliminated}
-                  className={`
-                    relative rounded-lg p-4 transition-all border-2 text-left
-                    ${isEliminated ? 'opacity-30 cursor-not-allowed' : ''}
-                    ${isSelected && !showAnswer ? 'bg-gradient-to-r from-orange-500 to-orange-400 border-orange-300 shadow-lg shadow-orange-500/50' : ''}
-                    ${!isSelected && !showAnswer && !isEliminated && !isFirstGuess ? 'bg-gradient-to-r from-blue-800 to-blue-700 border-blue-600 hover:border-blue-400' : ''}
-                    ${isCorrect ? 'bg-gradient-to-r from-green-600 to-green-500 border-green-400 shadow-lg shadow-green-500/50 animate-pulse' : ''}
-                    ${isWrong ? 'bg-gradient-to-r from-red-600 to-red-500 border-red-400' : ''}
-                    ${isFirstGuess && !showAnswer ? 'bg-gradient-to-r from-yellow-600 to-yellow-500 border-yellow-400' : ''}
-                    ${isFirstGuessWrong ? 'bg-gradient-to-r from-orange-700 to-orange-600 border-orange-500' : ''}
-                  `}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`
-                      w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg border-2
-                      ${isSelected && !showAnswer ? 'bg-white text-orange-500 border-white' : ''}
-                      ${isCorrect ? 'bg-white text-green-600 border-white' : ''}
-                      ${isWrong ? 'bg-white text-red-600 border-white' : ''}
-                      ${isFirstGuess && !showAnswer ? 'bg-white text-yellow-600 border-white' : ''}
-                      ${isFirstGuessWrong ? 'bg-white text-orange-600 border-white' : ''}
-                      ${!isSelected && !showAnswer && !isCorrect && !isEliminated && !isFirstGuess ? 'bg-transparent text-white border-white/50' : ''}
-                    `}>
-                      {optionLabels[i]}
+          {optionsRevealed ? (
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              {currentQ?.options?.map((opt, i) => {
+                const isSelected = contestantAnswer === i;
+                const isCorrect = showAnswer && i === currentQ?.correctOption;
+                const isWrong = showAnswer && isSelected && !isCorrect;
+                const isEliminated = eliminatedOptions.includes(i);
+                const isFirstGuess = doubleGuessUsed && firstGuess === i;
+                const isFirstGuessWrong = doubleGuessUsed && showAnswer && firstGuess === i && firstGuess !== currentQ?.correctOption;
+                
+                return (
+                  <button
+                    key={i}
+                    onClick={() => selectAnswer(i)}
+                    disabled={locked || isEliminated}
+                    className={`
+                      relative rounded-lg p-4 transition-all border-2 text-left
+                      ${isEliminated ? 'opacity-30 cursor-not-allowed' : ''}
+                      ${isSelected && !showAnswer ? 'bg-gradient-to-r from-orange-500 to-orange-400 border-orange-300 shadow-lg shadow-orange-500/50' : ''}
+                      ${!isSelected && !showAnswer && !isEliminated && !isFirstGuess ? 'bg-gradient-to-r from-blue-800 to-blue-700 border-blue-600 hover:border-blue-400' : ''}
+                      ${isCorrect ? 'bg-gradient-to-r from-green-600 to-green-500 border-green-400 shadow-lg shadow-green-500/50 animate-pulse' : ''}
+                      ${isWrong ? 'bg-gradient-to-r from-red-600 to-red-500 border-red-400' : ''}
+                      ${isFirstGuess && !showAnswer ? 'bg-gradient-to-r from-yellow-600 to-yellow-500 border-yellow-400' : ''}
+                      ${isFirstGuessWrong ? 'bg-gradient-to-r from-orange-700 to-orange-600 border-orange-500' : ''}
+                    `}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`
+                        w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg border-2
+                        ${isSelected && !showAnswer ? 'bg-white text-orange-500 border-white' : ''}
+                        ${isCorrect ? 'bg-white text-green-600 border-white' : ''}
+                        ${isWrong ? 'bg-white text-red-600 border-white' : ''}
+                        ${isFirstGuess && !showAnswer ? 'bg-white text-yellow-600 border-white' : ''}
+                        ${isFirstGuessWrong ? 'bg-white text-orange-600 border-white' : ''}
+                        ${!isSelected && !showAnswer && !isCorrect && !isEliminated && !isFirstGuess ? 'bg-transparent text-white border-white/50' : ''}
+                      `}>
+                        {optionLabels[i]}
+                      </div>
+                      <span className="text-white font-medium text-lg">{opt}</span>
                     </div>
-                    <span className="text-white font-medium text-lg">{opt}</span>
-                  </div>
-                  {isEliminated && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-full h-1 bg-red-600"></div>
-                    </div>
-                  )}
-                  {isFirstGuess && !showAnswer && (
-                    <div className="absolute -top-2 -right-2 bg-yellow-500 text-purple-900 rounded-full px-2 py-1 text-xs font-bold">
-                      1st
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+                    {isEliminated && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-full h-1 bg-red-600"></div>
+                      </div>
+                    )}
+                    {isFirstGuess && !showAnswer && (
+                      <div className="absolute -top-2 -right-2 bg-yellow-500 text-purple-900 rounded-full px-2 py-1 text-xs font-bold">
+                        1st
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mb-6 flex items-center justify-center">
+              <div className="bg-gradient-to-r from-blue-900/50 to-purple-900/50 rounded-xl p-12 border-2 border-blue-500/30">
+                <p className="text-2xl text-white/60 text-center">Options Hidden</p>
+              </div>
+            </div>
+          )}
 
           {/* Lifelines */}
           <div className="flex justify-center gap-4 mb-6">
@@ -552,10 +570,22 @@ export default function HostScreen() {
           {/* Control Buttons */}
           <div className="flex justify-center gap-4 mb-4">
             <button
-              onClick={lockAnswer}
-              disabled={locked || (doubleGuessUsed ? (firstGuess === null || contestantAnswer === null) : contestantAnswer === null)}
+              onClick={revealOptions}
+              disabled={optionsRevealed}
               className={`flex items-center gap-2 py-3 px-8 rounded-full font-bold text-lg transition-all ${
-                locked || (doubleGuessUsed ? (firstGuess === null || contestantAnswer === null) : contestantAnswer === null)
+                optionsRevealed
+                  ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white shadow-lg hover:scale-105'
+              }`}
+            >
+              <Eye className="w-5 h-5" />
+              Reveal Options
+            </button>
+            <button
+              onClick={lockAnswer}
+              disabled={locked || !optionsRevealed || (doubleGuessUsed ? (firstGuess === null || contestantAnswer === null) : contestantAnswer === null)}
+              className={`flex items-center gap-2 py-3 px-8 rounded-full font-bold text-lg transition-all ${
+                locked || !optionsRevealed || (doubleGuessUsed ? (firstGuess === null || contestantAnswer === null) : contestantAnswer === null)
                   ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
                   : 'bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-300 text-white shadow-lg hover:scale-105'
               }`}
