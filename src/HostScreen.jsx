@@ -5,7 +5,7 @@ import { Lock, Eye, ChevronRight, Play, Upload, AlertCircle } from "lucide-react
 
 export default function HostScreen() {
   const [gameStarted, setGameStarted] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(1);
   const [contestantAnswer, setContestantAnswer] = useState(null);
   const [locked, setLocked] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -50,13 +50,13 @@ export default function HostScreen() {
           Array.isArray(q.options) && 
           q.options.length === 4 &&
           typeof q.correctOption === 'number' &&
-          q.correctOption >= 0 &&
-          q.correctOption <= 3 &&
+          q.correctOption >= 1 &&
+          q.correctOption <= 4 &&
           typeof q.points === 'number'
         );
 
         // if (!isValid) {
-        //   setUploadError("Invalid question format. Each question must have: question (string), options (array of 4 strings), correctOption (number 0-3), points (number), checkpoint (optional boolean)");
+        //   setUploadError("Invalid question format. Each question must have: question (string), options (array of 4 strings), correctOption (number 1-4), points (number), checkpoint (optional boolean)");
         //   return;
         // }
 
@@ -112,7 +112,7 @@ export default function HostScreen() {
           timestamp: Date.now() 
         },
         gameStarted: false,
-        currentQuestionIndex: 0,
+        currentQuestionIndex: 1,
         contestantAnswer: null,
         locked: false,
         showAnswer: false,
@@ -150,7 +150,7 @@ export default function HostScreen() {
       onValue(gameStartedRef, snap => setGameStarted(snap.val() || false));
 
       const indexRef = ref(db, "game/currentQuestionIndex");
-      onValue(indexRef, snap => setCurrentIndex(snap.val() || 0));
+      onValue(indexRef, snap => setCurrentIndex(snap.val() || 1));
 
       const answerRef = ref(db, "game/contestantAnswer");
       onValue(answerRef, snap => setContestantAnswer(snap.val()));
@@ -231,7 +231,7 @@ export default function HostScreen() {
   const nextQuestion = () => {
     if (!isHost) return;
     const newIndex = currentIndex + 1;
-    if (newIndex >= questionsData.length) {
+    if (newIndex > questionsData.length) {
       alert("All questions completed!");
       return;
     }
@@ -253,8 +253,8 @@ export default function HostScreen() {
       set(ref(db, "game/activeLifeline"), type);
 
       if (type === "fiftyFifty") {
-        const correctOption = questionsData[currentIndex]?.correctOption;
-        const wrongOptions = [0, 1, 2, 3].filter(i => i !== correctOption);
+        const correctOption = questionsData[currentIndex - 1]?.correctOption;
+        const wrongOptions = [1, 2, 3, 4].filter(i => i !== correctOption);
         const toEliminate = wrongOptions.sort(() => 0.5 - Math.random()).slice(0, 2);
         set(ref(db, "game/eliminatedOptions"), toEliminate);
       } else if (type === "doubleGuess") {
@@ -268,7 +268,7 @@ export default function HostScreen() {
     set(ref(db, "game/activeLifeline"), null);
   };
 
-  const currentQ = questionsData[currentIndex];
+  const currentQ = questionsData[currentIndex - 1];
   const optionLabels = ["A", "B", "C", "D"];
 
   // Show host error if another host exists
@@ -346,7 +346,7 @@ export default function HostScreen() {
   {
     "question": "What is the capital of India?",
     "options": ["Mumbai", "Delhi", "Kolkata", "Chennai"],
-    "correctOption": 1,
+    "correctOption": 2,
     "points": 5000,
     "checkpoint": false
   }
@@ -380,7 +380,7 @@ export default function HostScreen() {
           <p className="text-lg text-green-300 mb-12">{questionsData.length} questions loaded ✓</p>
           <button
             onClick={startGame}
-            className="bg-linear-to-r bg-purple-500 text-white font-bold text-2xl py-5 px-16 rounded-xl shadow-2xl transform hover:scale-110 transition-all flex items-center gap-4 mx-auto"
+            className="bg-gradient-to-r from-purple-600 to-purple-500 text-white font-bold text-2xl py-5 px-16 rounded-xl shadow-2xl transform hover:scale-110 transition-all flex items-center gap-4 mx-auto"
           >
             <Play className="w-8 h-8" />
             Start Game
@@ -396,7 +396,7 @@ export default function HostScreen() {
 <div className="w-72 min-h-screen bg-gradient-to-b from-purple-950/90 via-blue-950/90 to-purple-950/90 border-r-4 border-orange-500/30 p-4 flex flex-col">
   <div className="flex-1 flex flex-col justify-between overflow-y-auto">
     {questionsData.slice().reverse().map((q, revIdx) => {
-      const idx = questionsData.length - 1 - revIdx;
+      const idx = questionsData.length - revIdx;
       const isPast = idx < currentIndex;
       const isCurrent = idx === currentIndex;
 
@@ -412,7 +412,7 @@ export default function HostScreen() {
         >
           <div className="flex items-center justify-center">
             <span className={`font-bold text-lg ${isCurrent ? 'text-white' : ''}`}>
-              Question {idx + 1}
+              Question {idx}
             </span>
             {q.checkpoint && (
               <span className={`ml-2 text-xs font-bold ${isCurrent ? 'text-white' : 'text-yellow-500'}`}>
@@ -432,7 +432,7 @@ export default function HostScreen() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col relative">
         {/* Background Pattern */}
-        <div className="absolute inset-0 bg-linear-to-b from-blue-950 via-purple-950 to-blue-950 opacity-80"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-950 via-purple-950 to-blue-950 opacity-80"></div>
         <div className="absolute inset-0" style={{
           backgroundColor: '#361F58',
           backgroundSize: '100px 100px'
@@ -443,13 +443,13 @@ export default function HostScreen() {
           <div className="text-center mb-4">
             <h1 className="text-4xl font-bold text-yellow-400 mb-2">Host Control Panel</h1>
             <div className="text-white text-lg">
-              Question <span className="font-bold text-orange-400">{currentIndex + 1}</span> of {questionsData.length}
+              Question <span className="font-bold text-orange-400">{currentIndex}</span> of {questionsData.length}
             </div>
           </div> 
 
           {/* Question */}
           <div className="mb-6">
-            <div className="bg-linear-to-r bg-purple-950 rounded-xl p-8 border-2 border-[#E3C321] shadow-2xl">
+            <div className="bg-gradient-to-r from-purple-900 to-purple-800 rounded-xl p-8 border-2 border-[#E3C321] shadow-2xl">
               <p className="text-2xl text-white text-center font-medium leading-relaxed">
                 {currentQ?.question}
               </p>
@@ -460,17 +460,18 @@ export default function HostScreen() {
           {optionsRevealed ? (
             <div className="grid grid-cols-2 gap-4 mb-6">
               {currentQ?.options?.map((opt, i) => {
-                const isSelected = contestantAnswer === i;
-                const isCorrect = showAnswer && i === currentQ?.correctOption;
+                const optionNumber = i + 1;
+                const isSelected = contestantAnswer === optionNumber;
+                const isCorrect = showAnswer && optionNumber === currentQ?.correctOption;
                 const isWrong = showAnswer && isSelected && !isCorrect;
-                const isEliminated = eliminatedOptions.includes(i);
-                const isFirstGuess = doubleGuessUsed && firstGuess === i;
-                const isFirstGuessWrong = doubleGuessUsed && showAnswer && firstGuess === i && firstGuess !== currentQ?.correctOption;
+                const isEliminated = eliminatedOptions.includes(optionNumber);
+                const isFirstGuess = doubleGuessUsed && firstGuess === optionNumber;
+                const isFirstGuessWrong = doubleGuessUsed && showAnswer && firstGuess === optionNumber && firstGuess !== currentQ?.correctOption;
                 
                 return (
                   <button
                     key={i}
-                    onClick={() => selectAnswer(i)}
+                    onClick={() => selectAnswer(optionNumber)}
                     disabled={locked || isEliminated}
                     className={`
                       relative rounded-lg p-4 transition-all border-2 text-left
@@ -526,7 +527,7 @@ export default function HostScreen() {
               disabled={!lifelines.fiftyFifty || locked}
               className={`w-16 h-16 rounded-full flex items-center justify-center border-2 transition-all ${
                 lifelines.fiftyFifty && !locked
-                  ? 'bg-linear-to-br from-orange-500 to-orange-400 border-orange-300 shadow-lg hover:scale-110'
+                  ? 'bg-gradient-to-br from-orange-500 to-orange-400 border-orange-300 shadow-lg hover:scale-110'
                   : 'bg-gray-800/50 border-gray-700 opacity-40 cursor-not-allowed'
               }`}
             >
@@ -537,7 +538,7 @@ export default function HostScreen() {
               disabled={!lifelines.phoneFriend || locked}
               className={`w-16 h-16 rounded-full flex items-center justify-center border-2 transition-all ${
                 lifelines.phoneFriend && !locked
-                  ? 'bg-linear-to-br from-orange-500 to-orange-400 border-orange-300 shadow-lg hover:scale-110'
+                  ? 'bg-gradient-to-br from-orange-500 to-orange-400 border-orange-300 shadow-lg hover:scale-110'
                   : 'bg-gray-800/50 border-gray-700 opacity-40 cursor-not-allowed'
               }`}
             >
@@ -548,7 +549,7 @@ export default function HostScreen() {
               disabled={!lifelines.audiencePoll || locked}
               className={`w-16 h-16 rounded-full flex items-center justify-center border-2 transition-all ${
                 lifelines.audiencePoll && !locked
-                  ? 'bg-linear-to-br from-orange-500 to-orange-400 border-orange-300 shadow-lg hover:scale-110'
+                  ? 'bg-gradient-to-br from-orange-500 to-orange-400 border-orange-300 shadow-lg hover:scale-110'
                   : 'bg-gray-800/50 border-gray-700 opacity-40 cursor-not-allowed'
               }`}
             >
@@ -587,7 +588,7 @@ export default function HostScreen() {
               className={`flex items-center gap-2 py-3 px-8 rounded-full font-bold text-lg transition-all ${
                 locked || !optionsRevealed || (doubleGuessUsed ? (firstGuess === null || contestantAnswer === null) : contestantAnswer === null)
                   ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                  : 'bg-linear-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-300 text-white shadow-lg hover:scale-105'
+                  : 'bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-400 hover:to-orange-300 text-white shadow-lg hover:scale-105'
               }`}
             >
               <Lock className="w-5 h-5" />
@@ -599,7 +600,7 @@ export default function HostScreen() {
               className={`flex items-center gap-2 py-3 px-8 rounded-full font-bold text-lg transition-all ${
                 !locked || showAnswer
                   ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                  : 'bg-linear-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white shadow-lg hover:scale-105'
+                  : 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white shadow-lg hover:scale-105'
               }`}
             >
               <Eye className="w-5 h-5" />
@@ -611,7 +612,7 @@ export default function HostScreen() {
               className={`flex items-center gap-2 py-3 px-8 rounded-full font-bold text-lg transition-all ${
                 !showAnswer
                   ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                  : 'bg-linear-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white shadow-lg hover:scale-105'
+                  : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white shadow-lg hover:scale-105'
               }`}
             >
               Next
@@ -646,7 +647,7 @@ export default function HostScreen() {
             <div className="text-center mt-2">
               <div className="bg-blue-900/80 text-white rounded-lg p-3 inline-block">
                 <p className="text-sm">
-                  {firstGuess === null ? "Select first answer" : `First guess: ${optionLabels[firstGuess]} - Select second answer`}
+                  {firstGuess === null ? "Select first answer" : `First guess: ${optionLabels[firstGuess - 1]} - Select second answer`}
                 </p>
               </div>
             </div>
