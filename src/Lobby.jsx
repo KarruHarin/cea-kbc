@@ -9,7 +9,7 @@ export default function Lobby({ setRole }) {
   const joinAsHost = () => setShowPassword(true);
 
   const confirmHost = async () => {
-    if (password === "123456") {
+    if (password === "Harin@123") {
       await set(ref(db, "game/host"), { active: true });
       setRole("host"); // **This now navigates to HostScreen**
     } else {
