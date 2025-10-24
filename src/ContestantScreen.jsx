@@ -5,7 +5,7 @@ import { AlertCircle } from "lucide-react";
 
 export default function ContestantScreen() {
   const [gameStarted, setGameStarted] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(1);
   const [questions, setQuestions] = useState([]);
   const [contestantAnswer, setContestantAnswer] = useState(null);
   const [locked, setLocked] = useState(false);
@@ -42,7 +42,7 @@ export default function ContestantScreen() {
     });
 
     const unsubscribeIndex = onValue(ref(db, "game/currentQuestionIndex"), snap => {
-      if (snap.exists()) setCurrentIndex(snap.val() || 0);
+      if (snap.exists()) setCurrentIndex(snap.val() || 1);
     });
 
     const unsubscribeQuestions = onValue(ref(db, "game/questions"), snap => {
@@ -108,7 +108,7 @@ export default function ContestantScreen() {
   }, []);
 
   const optionLabels = ["A", "B", "C", "D"];
-  const currentQuestion = questions[currentIndex] || {};
+  const currentQuestion = questions[currentIndex - 1] || {};
 
   if (!gameExists || !hostActive) {
     return (
@@ -141,7 +141,6 @@ export default function ContestantScreen() {
             </div>
           </div>
           <h1 className="text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-300 mb-4" style={{fontFamily: 'serif', textShadow: '0 0 40px rgba(251, 191, 36, 0.5)'}}>
-            Kaun Banega Civil Engineer
             Kaun Banega civil Engineer
           </h1>
           <p className="text-2xl text-white/80 mb-4">Contestant Panel</p>
@@ -156,7 +155,7 @@ export default function ContestantScreen() {
   <div className="w-72 min-h-screen bg-gradient-to-b from-purple-950/90 via-blue-950/90 to-purple-950/90 border-r-4 border-orange-500/30 p-4 flex flex-col">
   <div className="flex-1 flex flex-col justify-between overflow-y-auto">
     {questions.slice().reverse().map((q, revIdx) => {
-      const idx = questions.length - 1 - revIdx;
+      const idx = questions.length - revIdx;
       const isPast = idx < currentIndex;
       const isCurrent = idx === currentIndex;
 
@@ -172,7 +171,7 @@ export default function ContestantScreen() {
         >
           <div className="flex items-center justify-center">
             <span className={`font-bold text-lg ${isCurrent ? 'text-white' : ''}`}>
-              Question {idx + 1}
+              Question {idx}
             </span>
             {q.checkpoint && (
               <span className={`ml-2 text-xs font-bold ${isCurrent ? 'text-white' : 'text-yellow-500'}`}>
@@ -199,7 +198,7 @@ export default function ContestantScreen() {
           <div className="text-center mb-6">
             <div className="inline-block bg-gradient-to-r from-orange-500 to-orange-400 px-6 py-3 rounded-full shadow-lg">
               <p className="text-white font-bold text-xl">
-                Question {currentIndex + 1} of {questions.length}
+                Question {currentIndex} of {questions.length}
               </p>
             </div>
           </div>
@@ -215,12 +214,13 @@ export default function ContestantScreen() {
           {optionsRevealed ? (
             <div className="grid grid-cols-2 gap-4 mb-8">
               {currentQuestion?.options?.map((opt, i) => {
-                const isSelected = contestantAnswer === i;
-                const isCorrect = showAnswer && i === currentQuestion?.correctOption;
+                const optionNumber = i + 1;
+                const isSelected = contestantAnswer === optionNumber;
+                const isCorrect = showAnswer && optionNumber === currentQuestion?.correctOption;
                 const isWrong = showAnswer && isSelected && !isCorrect;
-                const isEliminated = eliminatedOptions.includes(i);
-                const isFirstGuess = doubleGuessUsed && firstGuess === i;
-                const isFirstGuessWrong = doubleGuessUsed && showAnswer && firstGuess === i && firstGuess !== currentQuestion?.correctOption;
+                const isEliminated = eliminatedOptions.includes(optionNumber);
+                const isFirstGuess = doubleGuessUsed && firstGuess === optionNumber;
+                const isFirstGuessWrong = doubleGuessUsed && showAnswer && firstGuess === optionNumber && firstGuess !== currentQuestion?.correctOption;
                 
                 return (
                   <div
