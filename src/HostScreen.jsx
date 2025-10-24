@@ -55,10 +55,10 @@ export default function HostScreen() {
           typeof q.points === 'number'
         );
 
-        if (!isValid) {
-          setUploadError("Invalid question format. Each question must have: question (string), options (array of 4 strings), correctOption (number 0-3), points (number), checkpoint (optional boolean)");
-          return;
-        }
+        // if (!isValid) {
+        //   setUploadError("Invalid question format. Each question must have: question (string), options (array of 4 strings), correctOption (number 0-3), points (number), checkpoint (optional boolean)");
+        //   return;
+        // }
 
         setQuestionsData(json);
         setQuestionsLoaded(true);
@@ -445,7 +445,7 @@ export default function HostScreen() {
             <div className="text-white text-lg">
               Question <span className="font-bold text-orange-400">{currentIndex + 1}</span> of {questionsData.length}
             </div>
-          </div> */}
+          </div> 
 
           {/* Question */}
           <div className="mb-6">
