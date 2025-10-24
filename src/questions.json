@@ -1,10 +1,10 @@
 [
   {
-    "question": "SORBONASH kothay korbi ?",
+    "question": "Random question",
     "options": ["Berlin","Paris","Rome","Madrid"],
     "correctOption": 1,
     "checkpoint": true,
-    "timeLimit": 200,
+    "timeLimit": 2000000,
     "points": 1000
   },
   {
@@ -12,7 +12,7 @@
     "options": ["1","2","3","4"],
     "correctOption": 3,
     "checkpoint": false,
-    "timeLimit": 100,
+    "timeLimit": 10000000,
     "points": 500
   },
   {
@@ -20,7 +20,7 @@
     "options": ["Shakespeare","Dickens","Tolstoy","Hemingway"],
     "correctOption": 0,
     "checkpoint": true,
-    "timeLimit": 150,
+    "timeLimit": 15000000,
     "points": 1500
   },
   {
@@ -28,7 +28,7 @@
     "options": ["Earth","Mars","Jupiter","Venus"],
     "correctOption": 1,
     "checkpoint": false,
-    "timeLimit": 150,
+    "timeLimit": 15000000,
     "points": 700
   },
   {
@@ -36,7 +36,7 @@
     "options": ["10","11","12","13"],
     "correctOption": 2,
     "checkpoint": false,
-    "timeLimit": 120,
+    "timeLimit": 12000000,
     "points": 800
   },
   {
@@ -44,7 +44,7 @@
     "options": ["Fluorine","Iron","Fermium","Francium"],
     "correctOption": 1,
     "checkpoint": true,
-    "timeLimit": 180,
+    "timeLimit": 18000000,
     "points": 1200
   },
   {
@@ -52,7 +52,7 @@
     "options": ["Van Gogh","Michelangelo","Da Vinci","Picasso"],
     "correctOption": 2,
     "checkpoint": false,
-    "timeLimit": 180,
+    "timeLimit": 18000000000,
     "points": 1000
   },
   {
@@ -60,7 +60,7 @@
     "options": ["1940","1945","1950","1939"],
     "correctOption": 1,
     "checkpoint": true,
-    "timeLimit": 200,
+    "timeLimit": 2000000,
     "points": 1500
   },
   {
@@ -68,7 +68,7 @@
     "options": ["cos(x)","-sin(x)","-cos(x)","sin(x)"],
     "correctOption": 0,
     "checkpoint": false,
-    "timeLimit": 150,
+    "timeLimit": 15000000,
     "points": 1300
   },
   {
@@ -76,7 +76,7 @@
     "options": ["Newton","Einstein","Bohr","Tesla"],
     "correctOption": 1,
     "checkpoint": true,
-    "timeLimit": 220,
+    "timeLimit": 22000000,
     "points": 2000
   }
 ]

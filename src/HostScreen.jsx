@@ -224,7 +224,7 @@ export default function HostScreen() {
   if (!gameStarted) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden">
-        <audio ref={backgroundAudioRef} src="/meme-intro-combined.mp3" loop />
+        <audio ref={backgroundAudioRef} src="/kbc-background.mp3" loop />
         <audio ref={clockAudioRef} src="/kbc-clock.mp3" loop />
         <audio ref={lifelineAudioRef} src="/kbc-lifeline.mp3" loop />
         <audio ref={lockAudioRef} src="/kbc-optionLock.mp3" />
